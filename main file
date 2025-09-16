@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Cryptography Tool</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <!-- Crypto-JS CDN for AES encryption/decryption -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+
+    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-2xl w-full space-y-8">
+        <header class="text-center">
+            <h1 class="text-4xl font-extrabold text-gray-800">File Cryptography</h1>
+            <p class="mt-2 text-gray-600 text-lg">Encrypt and decrypt files securely using AES.</p>
+        </header>
+
+        <!-- Main Content Area -->
+        <div class="space-y-6">
+
+            <!-- Encryption Section -->
+            <div id="encrypt-section" class="bg-blue-50 rounded-xl p-6 border-2 border-blue-200">
+                <h2 class="text-2xl font-bold text-blue-800 mb-4">Encrypt File</h2>
+                <input type="file" id="encrypt-file-input" class="w-full text-gray-700 bg-white rounded-lg border-2 border-gray-300 p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <input type="password" id="encrypt-key-input" placeholder="Enter encryption key" class="mt-4 w-full text-gray-700 rounded-lg border-2 border-gray-300 p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <button id="encrypt-btn" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition duration-300 ease-in-out transform hover:scale-105">Encrypt</button>
+            </div>
+
+            <!-- Decryption Section -->
+            <div id="decrypt-section" class="bg-red-50 rounded-xl p-6 border-2 border-red-200">
+                <h2 class="text-2xl font-bold text-red-800 mb-4">Decrypt File</h2>
+                <input type="file" id="decrypt-file-input" class="w-full text-gray-700 bg-white rounded-lg border-2 border-gray-300 p-2 focus:ring-2 focus:ring-red-500 focus:outline-none">
+                <input type="password" id="decrypt-key-input" placeholder="Enter decryption key" class="mt-4 w-full text-gray-700 rounded-lg border-2 border-gray-300 p-2 focus:ring-2 focus:ring-red-500 focus:outline-none">
+                <button id="decrypt-btn" class="mt-4 w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-xl transition duration-300 ease-in-out transform hover:scale-105">Decrypt</button>
+            </div>
+            
+            <!-- Gemini API Features Section -->
+            <div id="gemini-section" class="bg-gray-100 rounded-xl p-6 border-2 border-gray-300">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">✨ Gemini-Powered Tools</h2>
+                <button id="generate-password-btn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition duration-300 ease-in-out transform hover:scale-105">
+                    ✨ Generate Secure Password
+                </button>
+                <div id="generated-password-container" class="mt-4 text-center hidden">
+                    <p class="text-gray-600 mb-2">Your generated password:</p>
+                    <div class="relative inline-block w-full">
+                        <input type="text" id="generated-password-input" class="w-full text-center text-xl font-mono p-2 border rounded-lg bg-gray-50 focus:outline-none" readonly>
+                        <button id="copy-password-btn" class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-500 hover:text-gray-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <button id="generate-tips-btn" class="mt-4 w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition duration-300 ease-in-out transform hover:scale-105">
+                    ✨ Get Password Security Tips
+                </button>
+                <div id="security-tips-container" class="mt-4 text-left p-4 rounded-xl bg-gray-50 hidden">
+                    <h3 class="font-bold text-lg mb-2 text-gray-800">Tips:</h3>
+                    <ul id="security-tips-list" class="list-disc list-inside space-y-1"></ul>
+                </div>
+            </div>
+
+            <!-- Status and Download Area -->
+            <div class="text-center">
+                <div id="status-message" class="mt-4 text-lg font-medium text-gray-700"></div>
+                <div id="loading-spinner" class="mt-4 hidden animate-spin rounded-full h-8 w-8 border-4 border-gray-400 border-t-transparent mx-auto"></div>
+                <!-- This link is made visible after successful encryption/decryption -->
+                <a id="download-link" href="#" class="mt-4 inline-block bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-xl transition duration-300 ease-in-out transform hover:scale-105 hidden" download>
+                    Download File
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const encryptFileInput = document.getElementById('encrypt-file-input');
+            const encryptKeyInput = document.getElementById('encrypt-key-input');
+            const encryptBtn = document.getElementById('encrypt-btn');
+            const decryptFileInput = document.getElementById('decrypt-file-input');
+            const decryptKeyInput = document.getElementById('decrypt-key-input');
+            const decryptBtn = document.getElementById('decrypt-btn');
+            const statusMessage = document.getElementById('status-message');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const downloadLink = document.getElementById('download-link');
+
+            // Gemini API related elements
+            const generatePasswordBtn = document.getElementById('generate-password-btn');
+            const generatedPasswordContainer = document.getElementById('generated-password-container');
+            const generatedPasswordInput = document.getElementById('generated-password-input');
+            const copyPasswordBtn = document.getElementById('copy-password-btn');
+            const generateTipsBtn = document.getElementById('generate-tips-btn');
+            const securityTipsContainer = document.getElementById('security-tips-container');
+            const securityTipsList = document.getElementById('security-tips-list');
+
+            // Utility function to enable or disable buttons
+            const toggleButtons = (disabled) => {
+                encryptBtn.disabled = disabled;
+                decryptBtn.disabled = disabled;
+                generatePasswordBtn.disabled = disabled;
+                generateTipsBtn.disabled = disabled;
+                encryptBtn.classList.toggle('opacity-50', disabled);
+                decryptBtn.classList.toggle('opacity-50', disabled);
+                generatePasswordBtn.classList.toggle('opacity-50', disabled);
+                generateTipsBtn.classList.toggle('opacity-50', disabled);
+                encryptBtn.classList.toggle('cursor-not-allowed', disabled);
+                decryptBtn.classList.toggle('cursor-not-allowed', disabled);
+                generatePasswordBtn.classList.toggle('cursor-not-allowed', disabled);
+                generateTipsBtn.classList.toggle('cursor-not-allowed', disabled);
+            };
+
+            // Utility function to update the status message
+            const updateStatus = (message, isError = false) => {
+                statusMessage.textContent = message;
+                statusMessage.className = `mt-4 text-lg font-medium ${isError ? 'text-red-600' : 'text-gray-700'}`;
+                downloadLink.classList.add('hidden');
+                loadingSpinner.classList.add('hidden');
+                toggleButtons(false); // Re-enable buttons on status update
+            };
+
+            // Utility function to show the loading spinner
+            const showLoading = (message) => {
+                statusMessage.textContent = message;
+                statusMessage.className = 'mt-4 text-lg font-medium text-blue-600';
+                loadingSpinner.classList.remove('hidden');
+                downloadLink.classList.add('hidden');
+                toggleButtons(true); // Disable buttons while loading
+            };
+
+            // Convert ArrayBuffer to CryptoJS WordArray
+            const arrayBufferToWordArray = (arrayBuffer) => {
+                const i8a = new Uint8Array(arrayBuffer);
+                const a = [];
+                for (let i = 0; i < i8a.length; i += 4) {
+                    a.push((i8a[i] << 24) | (i8a[i + 1] << 16) | (i8a[i + 2] << 8) | i8a[i + 3]);
+                }
+                return CryptoJS.lib.WordArray.create(a, i8a.length);
+            };
+
+            // Convert CryptoJS WordArray to ArrayBuffer
+            const wordArrayToArrayBuffer = (wordArray) => {
+                const words = wordArray.words;
+                const sigBytes = wordArray.sigBytes;
+                const u8a = new Uint8Array(sigBytes);
+                for (let i = 0; i < sigBytes; i++) {
+                    u8a[i] = (words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
+                }
+                return u8a.buffer;
+            };
+
+            // Event listener for the Encrypt button
+            encryptBtn.addEventListener('click', () => {
+                const file = encryptFileInput.files[0];
+                const key = encryptKeyInput.value;
+
+                // Validate inputs
+                if (!file) {
+                    updateStatus('Please select a file to encrypt.', true);
+                    return;
+                }
+                if (!key) {
+                    updateStatus('Please enter a password/key.', true);
+                    return;
+                }
+
+                showLoading('Encrypting file...');
+
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    try {
+                        const fileContentArrayBuffer = e.target.result;
+                        const wordArray = arrayBufferToWordArray(fileContentArrayBuffer);
+                        // Encrypt the file content using AES
+                        const encrypted = CryptoJS.AES.encrypt(wordArray, key);
+
+                        // Create a Blob from the encrypted string
+                        const blob = new Blob([encrypted.toString()], { type: 'application/octet-stream' });
+                        const url = URL.createObjectURL(blob);
+
+                        // Create a file name with a .enc extension
+                        const fileName = file.name + '.enc';
+
+                        // Set up the download link
+                        downloadLink.href = url;
+                        downloadLink.download = fileName;
+                        downloadLink.classList.remove('hidden');
+                        updateStatus('File encrypted successfully!');
+
+                    } catch (error) {
+                        console.error("Encryption error:", error);
+                        updateStatus('An error occurred during encryption.', true);
+                    }
+                };
+
+                // Read the file content as an ArrayBuffer, which is better for binary data
+                reader.readAsArrayBuffer(file);
+            });
+
+            // Event listener for the Decrypt button
+            decryptBtn.addEventListener('click', () => {
+                const file = decryptFileInput.files[0];
+                const key = decryptKeyInput.value;
+
+                // Validate inputs
+                if (!file) {
+                    updateStatus('Please select a file to decrypt.', true);
+                    return;
+                }
+                if (!key) {
+                    updateStatus('Please enter a password/key.', true);
+                    return;
+                }
+                if (!file.name.endsWith('.enc')) {
+                     updateStatus('This does not appear to be an encrypted file (.enc).', true);
+                     return;
+                }
+
+                showLoading('Decrypting file...');
+
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    try {
+                        const encryptedContent = e.target.result;
+
+                        // Decrypt the file content
+                        const decrypted = CryptoJS.AES.decrypt(encryptedContent, key);
+                        const decryptedArrayBuffer = wordArrayToArrayBuffer(decrypted);
+                        
+                        // Check if decryption was successful
+                        if (decrypted.words.length === 0) {
+                            updateStatus('Incorrect key or corrupted file. Decryption failed.', true);
+                            return;
+                        }
+
+                        // Create a Blob from the decrypted content
+                        const blob = new Blob([decryptedArrayBuffer], { type: 'application/octet-stream' });
+                        const url = URL.createObjectURL(blob);
+
+                        // Create a file name without the .enc extension
+                        const fileName = file.name.replace(/\.enc$/, '');
+
+                        // Set up the download link
+                        downloadLink.href = url;
+                        downloadLink.download = fileName;
+                        downloadLink.classList.remove('hidden');
+                        updateStatus('File decrypted successfully!');
+
+                    } catch (error) {
+                        console.error("Decryption error:", error);
+                        updateStatus('An error occurred during decryption. The key might be incorrect.', true);
+                    }
+                };
+
+                // Read the encrypted file content as text
+                reader.readAsText(file);
+            });
+
+            // Gemini API call function
+            const callGeminiApi = async (prompt) => {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }],
+                };
+
+                // Attempt a single API call without retries
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API call failed with status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    return result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                } catch (error) {
+                    console.error("Gemini API error:", error);
+                    return '';
+                }
+            };
+
+            // Event listener for generating a password
+            generatePasswordBtn.addEventListener('click', async () => {
+                showLoading('Generating secure password...');
+                generatedPasswordContainer.classList.add('hidden');
+                const prompt = "Generate a single, highly secure, and memorable password that is at least 12 characters long. The password should include a mix of uppercase letters, lowercase letters, numbers, and special characters. Do not include any introductory or concluding text; only provide the password.";
+                const password = await callGeminiApi(prompt);
+                
+                if (password) {
+                    generatedPasswordInput.value = password.trim();
+                    generatedPasswordContainer.classList.remove('hidden');
+                    updateStatus('Secure password generated successfully.');
+                } else {
+                    updateStatus('Failed to generate password. Please try again.', true);
+                }
+            });
+
+            // Event listener for generating tips
+            generateTipsBtn.addEventListener('click', async () => {
+                showLoading('Generating password security tips...');
+                securityTipsContainer.classList.add('hidden');
+                const prompt = "Provide 3 short, easy-to-follow tips for creating and managing strong passwords. Format the tips as a concise, numbered list. Do not include any introductory or concluding text.";
+                const tipsText = await callGeminiApi(prompt);
+
+                if (tipsText) {
+                    securityTipsList.innerHTML = ''; // Clear previous tips
+                    const tipsArray = tipsText.split('\n');
+                    tipsArray.forEach(tip => {
+                        if (tip.trim() !== '') {
+                            const li = document.createElement('li');
+                            li.textContent = tip.trim();
+                            securityTipsList.appendChild(li);
+                        }
+                    });
+                    securityTipsContainer.classList.remove('hidden');
+                    updateStatus('Password security tips generated successfully.');
+                } else {
+                    updateStatus('Failed to generate tips. Please try again.', true);
+                }
+            });
+
+            // Event listener to copy the generated password to clipboard
+            copyPasswordBtn.addEventListener('click', () => {
+                generatedPasswordInput.select();
+                document.execCommand('copy');
+                updateStatus('Password copied to clipboard!');
+            });
+        });
+    </script>
+</body>
+</html>
